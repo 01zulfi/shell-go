@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 )
 
@@ -13,6 +14,7 @@ type Input struct {
 }
 
 type Shell struct {
+	paths    []string
 	commands map[string]string
 }
 
@@ -21,13 +23,33 @@ func (s *Shell) isBuiltin(command string) bool {
 	return ok
 }
 
+func (s *Shell) inPath(command string) (string, bool) {
+	pathsMap := s.getPathsMap()
+	for path, fileNames := range pathsMap {
+		if slices.Contains(fileNames, command) {
+			return path + "/" + command, true
+		}
+	}
+	return "", false
+}
+
+func (s *Shell) getPathsMap() map[string][]string {
+	pathsMap := make(map[string][]string)
+	for _, path := range s.paths {
+		pathsMap[path] = getAllFileNames(path)
+	}
+	return pathsMap
+}
+
 func newShell() Shell {
+	path := os.Getenv("PATH")
 	commands := make(map[string]string)
 	commands["exit"] = "exit"
 	commands["echo"] = "echo"
 	commands["type"] = "type"
 	shell := Shell{
 		commands: commands,
+		paths:    strings.Split(path, ":"),
 	}
 	return shell
 }
@@ -57,9 +79,13 @@ func main() {
 		case shell.commands["type"]:
 			argument := strings.Join(input.arguments, " ")
 			isBuiltin := shell.isBuiltin(argument)
+			path, isInPath := shell.inPath(argument)
+
 			var out string
 			if isBuiltin {
 				out = fmt.Sprintf("%s is a shell builtin", argument)
+			} else if isInPath {
+				out = fmt.Sprintf("%s is %s", argument, path)
 			} else {
 				out = fmt.Sprintf("%s: not found", argument)
 			}
@@ -75,4 +101,16 @@ func main() {
 
 func commandNotFoundMesssage(cmd string) string {
 	return fmt.Sprintf("%s: command not found", cmd)
+}
+
+func getAllFileNames(dir string) []string {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		return make([]string, 1)
+	}
+	var out []string
+	for _, file := range files {
+		out = append(out, file.Name())
+	}
+	return out
 }
