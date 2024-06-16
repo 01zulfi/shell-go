@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"slices"
 	"strings"
 )
@@ -91,6 +92,18 @@ func main() {
 			}
 			fmt.Fprint(os.Stdout, out)
 		default:
+			path, isInPath := shell.inPath(input.command)
+			if isInPath {
+				externalCommand := exec.Command(path, input.arguments...)
+				out, err := externalCommand.CombinedOutput()
+				if err != nil {
+					errorOutput := fmt.Sprintf("error executing %s", input.command)
+					fmt.Fprint(os.Stdout, errorOutput)
+				}
+				fmt.Fprint(os.Stdout, strings.TrimSpace(string(out)))
+				break
+			}
+
 			out := commandNotFoundMesssage(input.command)
 			fmt.Fprint(os.Stdout, out)
 		}
