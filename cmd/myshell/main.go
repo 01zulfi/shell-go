@@ -4,21 +4,39 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
+type Input struct {
+	command   string
+	arguments []string
+}
+
 func main() {
+	commands := make(map[string]string)
+	commands["exit"] = "exit"
+
 	for {
 		fmt.Fprint(os.Stdout, "$ ")
-
-		input, err := bufio.NewReader(os.Stdin).ReadString('\n')
-
+		text, err := bufio.NewReader(os.Stdin).ReadString('\n')
 		if err != nil {
 			fmt.Println("Error while reading command: ", err)
 			return
 		}
 
-		out := commandNotFoundMesssage(input[:len(input)-1])
-		fmt.Fprint(os.Stdout, out)
+		text = strings.TrimSpace(text)
+		input := Input{
+			command:   strings.Split(text, " ")[0],
+			arguments: strings.Split(text, " ")[1:],
+		}
+
+		switch input.command {
+		case commands["exit"]:
+			os.Exit(0)
+		default:
+			out := commandNotFoundMesssage(input.command)
+			fmt.Fprint(os.Stdout, out)
+		}
 
 		fmt.Println()
 	}
