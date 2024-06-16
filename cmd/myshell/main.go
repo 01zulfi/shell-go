@@ -15,6 +15,7 @@ type Input struct {
 func main() {
 	commands := make(map[string]string)
 	commands["exit"] = "exit"
+	commands["echo"] = "echo"
 
 	for {
 		fmt.Fprint(os.Stdout, "$ ")
@@ -33,6 +34,8 @@ func main() {
 		switch input.command {
 		case commands["exit"]:
 			os.Exit(0)
+		case commands["echo"]:
+			fmt.Fprint(os.Stdout, strings.Join(input.arguments, " "))
 		default:
 			out := commandNotFoundMesssage(input.command)
 			fmt.Fprint(os.Stdout, out)
