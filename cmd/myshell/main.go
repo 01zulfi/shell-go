@@ -48,6 +48,7 @@ func newShell() Shell {
 	commands["exit"] = "exit"
 	commands["echo"] = "echo"
 	commands["type"] = "type"
+	commands["pwd"] = "pwd"
 	shell := Shell{
 		commands: commands,
 		paths:    strings.Split(path, ":"),
@@ -91,6 +92,12 @@ func main() {
 				out = fmt.Sprintf("%s: not found", argument)
 			}
 			fmt.Fprint(os.Stdout, out)
+		case shell.commands["pwd"]:
+			pwd, err := os.Getwd()
+			if err != nil {
+				fmt.Fprint(os.Stdout, "error executing pwd")
+			}
+			fmt.Fprint(os.Stdout, pwd)
 		default:
 			path, isInPath := shell.inPath(input.command)
 			if isInPath {
