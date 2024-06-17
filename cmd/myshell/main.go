@@ -104,7 +104,17 @@ func main() {
 			fmt.Println()
 		case shell.commands["cd"]:
 			argument := strings.Join(input.arguments, " ")
-			err := os.Chdir(argument)
+			var err error
+			if argument == "~" {
+				home, errInside := os.UserHomeDir()
+				if errInside != nil {
+					err = errInside
+				} else {
+					err = os.Chdir(home)
+				}
+			} else {
+				err = os.Chdir(argument)
+			}
 			if err != nil {
 				out := fmt.Sprintf("cd: %s: No such file or directory", argument)
 				fmt.Fprint(os.Stdout, out)
