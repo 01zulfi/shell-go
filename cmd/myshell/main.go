@@ -24,7 +24,7 @@ func (s *Shell) isBuiltin(command string) bool {
 	return ok
 }
 
-func (s *Shell) inPath(command string) (string, bool) {
+func (s *Shell) inPath(command string) (path string, isInPath bool) {
 	pathsMap := s.getPathsMap()
 	for path, fileNames := range pathsMap {
 		if slices.Contains(fileNames, command) {
@@ -49,6 +49,7 @@ func newShell() Shell {
 	commands["echo"] = "echo"
 	commands["type"] = "type"
 	commands["pwd"] = "pwd"
+	commands["cd"] = "cd"
 	shell := Shell{
 		commands: commands,
 		paths:    strings.Split(path, ":"),
@@ -78,6 +79,7 @@ func main() {
 			os.Exit(0)
 		case shell.commands["echo"]:
 			fmt.Fprint(os.Stdout, strings.Join(input.arguments, " "))
+			fmt.Println()
 		case shell.commands["type"]:
 			argument := strings.Join(input.arguments, " ")
 			isBuiltin := shell.isBuiltin(argument)
@@ -92,12 +94,22 @@ func main() {
 				out = fmt.Sprintf("%s: not found", argument)
 			}
 			fmt.Fprint(os.Stdout, out)
+			fmt.Println()
 		case shell.commands["pwd"]:
 			pwd, err := os.Getwd()
 			if err != nil {
 				fmt.Fprint(os.Stdout, "error executing pwd")
 			}
 			fmt.Fprint(os.Stdout, pwd)
+			fmt.Println()
+		case shell.commands["cd"]:
+			argument := strings.Join(input.arguments, " ")
+			err := os.Chdir(argument)
+			if err != nil {
+				out := fmt.Sprintf("cd: %s: No such file or directory", argument)
+				fmt.Fprint(os.Stdout, out)
+				fmt.Println()
+			}
 		default:
 			path, isInPath := shell.inPath(input.command)
 			if isInPath {
@@ -106,16 +118,17 @@ func main() {
 				if err != nil {
 					errorOutput := fmt.Sprintf("error executing %s", input.command)
 					fmt.Fprint(os.Stdout, errorOutput)
+					break
 				}
 				fmt.Fprint(os.Stdout, strings.TrimSpace(string(out)))
+				fmt.Println()
 				break
 			}
 
 			out := commandNotFoundMesssage(input.command)
 			fmt.Fprint(os.Stdout, out)
+			fmt.Println()
 		}
-
-		fmt.Println()
 	}
 }
 
